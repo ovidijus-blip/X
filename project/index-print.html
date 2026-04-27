@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Pack Your Tour — Settings (Print)</title>
+<meta name="viewport" content="width=1440, initial-scale=1" />
+<link rel="stylesheet" href="colors_and_type.css" />
+<style>
+  html, body { margin: 0; padding: 0; background: rgb(238, 238, 240); }
+  body {
+    font-family: "Helvetica Neue", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #131219; -webkit-font-smoothing: antialiased; letter-spacing: 0.02em;
+  }
+  button:focus-visible { outline: 2px solid rgb(87, 75, 255); outline-offset: 2px; }
+
+  /* On-screen: stack pages with gutter, like a real PDF preview */
+  .print-stack {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 24px; padding: 24px;
+  }
+  .page {
+    width: 1440px; height: 1020px; /* ~landscape A4-ish at 1440 wide */
+    background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    border-radius: 12px; overflow: hidden;
+    display: flex; flex-direction: column;
+    border: 1px solid rgb(230,230,232);
+  }
+  .page-header {
+    padding: 20px 32px; border-bottom: 1px solid rgb(230,230,232);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .page-header .left { display: flex; align-items: center; gap: 12px; }
+  .page-header .crumb { color: rgb(102,102,103); font-size: 13px; letter-spacing: 0.02em; }
+  .page-header h1 {
+    margin: 0; font-family: inherit; font-size: 22px; font-weight: 500; color: rgb(19,18,25);
+  }
+  .page-header .meta { font-size: 12px; color: rgb(102,102,103); letter-spacing: 0.03em; }
+  .page-body { flex: 1; padding: 28px 36px; overflow: hidden; }
+
+  @page { size: 1440px 1020px; margin: 0; }
+  @media print {
+    html, body { background: #fff; }
+    .print-stack { padding: 0; gap: 0; display: block; }
+    .page {
+      width: 1440px; height: 1020px;
+      box-shadow: none; border-radius: 0; border: 0;
+      page-break-after: always; break-after: page;
+      break-inside: avoid;
+    }
+    .page:last-child { page-break-after: auto; break-after: auto; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="tokens.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" src="src/Primitives.jsx"></script>
+  <script type="text/babel" src="src/Shell.jsx"></script>
+  <script type="text/babel" src="src/Settings.jsx"></script>
+  <script type="text/babel">
+    const PAGES = [
+      { id: 'profile',       title: 'Profile',                   render: () => <ProfileSection /> },
+      { id: 'notifications', title: 'Notifications',             render: () => <NotificationsSection /> },
+      { id: 'security',      title: 'Security',                  render: () => <SecuritySection /> },
+      { id: 'company',       title: 'Company',                   render: () => <CompanySection /> },
+      { id: 'team',          title: 'Team members',              render: () => <TeamSection /> },
+      { id: 'roles',         title: 'Roles & permissions',       render: () => <RolesSection /> },
+      { id: 'billing',       title: 'Billing & plan',            render: () => <BillingSection /> },
+    ];
+
+    function PrintApp() {
+      const total = PAGES.length;
+      return (
+        <div className="print-stack">
+          {PAGES.map((p, i) => (
+            <section key={p.id} className="page">
+              <div className="page-header">
+                <div className="left">
+                  <img src="assets/logo-mark.svg" height="22" />
+                  <span className="crumb">Settings</span>
+                  <span style={{ color: 'rgb(217,217,219)' }}>›</span>
+                  <h1>{p.title}</h1>
+                </div>
+                <div className="meta">
+                  Page {i + 1} of {total} · packyourtour.com
+                </div>
+              </div>
+              <div className="page-body">
+                {p.render()}
+              </div>
+            </section>
+          ))}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<PrintApp />);
+
+    // Auto-print after fonts + JSX load
+    (async () => {
+      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
+      // Wait for Babel-transpiled scripts to mount + sections to render
+      await new Promise(r => setTimeout(r, 800));
+      window.print();
+    })();
+  </script>
+</body>
+</html>
