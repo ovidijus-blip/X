@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Pack Your Tour — Add Item menu</title>
+<title>Pack Your Tour</title>
 <meta name="viewport" content="width=1440, initial-scale=1" />
 <link rel="stylesheet" href="colors_and_type.css" />
 <style>
@@ -38,16 +38,57 @@
   <div id="root"></div>
   <script type="text/babel" src="src/Primitives.jsx"></script>
   <script type="text/babel" src="src/Shell.jsx"></script>
+  <script type="text/babel" src="src/Itinerary.jsx"></script>
   <script type="text/babel" src="src/Settings.jsx"></script>
   <script type="text/babel">
-    function App() {
+    const { useState: useStateApp } = React;
+
+    const PAGE_TITLES = {
+      tours:    'Tokyo Discovery Tour',
+      orders:   'Orders',
+      tasks:    'My Tasks',
+      clients:  'Clients',
+      settings: 'Settings',
+    };
+
+    const PAGE_BREADCRUMBS = {
+      tours: { parent: 'Public Tours' },
+    };
+
+    function PlaceholderPage({ title }) {
+      const PL = window.PYT;
       return (
-        <Shell page="settings" onNav={() => {}}
-               title="Settings">
-          <Settings />
+        <div style={{
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          minHeight: 400, color: PL.color.ink400,
+          fontFamily: PL.font.sans, fontSize: 14, letterSpacing: PL.font.tracking.sm,
+        }}>
+          {title} — coming soon
+        </div>
+      );
+    }
+
+    function App() {
+      const [page, setPage] = useStateApp('settings');
+
+      function renderPage() {
+        if (page === 'tours')    return <Itinerary />;
+        if (page === 'settings') return <Settings />;
+        return <PlaceholderPage title={PAGE_TITLES[page] || page} />;
+      }
+
+      return (
+        <Shell
+          page={page}
+          onNav={setPage}
+          title={PAGE_TITLES[page] || page}
+          breadcrumb={PAGE_BREADCRUMBS[page]}
+        >
+          {renderPage()}
         </Shell>
       );
     }
+
     ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
 </body>

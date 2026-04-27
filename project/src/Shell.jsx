@@ -13,7 +13,7 @@ function Sidebar({ page, onNav, collapsed, onToggleCollapse }) {
   const isActive = (id) => {
     if (id === 'itinerary') return page === 'tours';
     if (id === 'orders') return page === 'orders' || page === 'order-details';
-    return false;
+    return page === id;
   };
   const W = collapsed ? 72 : 260;
   return (
