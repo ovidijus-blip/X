@@ -456,8 +456,192 @@ function SecuritySection() {
   );
 }
 
+// ---------- Invite teammate modal ----------
+function InviteModal({ open, onClose }) {
+  const ROLES = [
+    { id: 'Admin',  desc: 'Manages the workspace, team, and billing.' },
+    { id: 'Editor', desc: 'Builds and runs tours. Cannot manage team or billing.' },
+    { id: 'Viewer', desc: 'Read-only access to tours and clients.' },
+  ];
+  const [emails, setEmails] = useStateSet(['']);
+  const [role, setRole] = useStateSet('Editor');
+  const [message, setMessage] = useStateSet('');
+  const [copyLink, setCopyLink] = useStateSet(false);
+
+  if (!open) return null;
+
+  const updateEmail = (i, v) => setEmails(es => es.map((e, idx) => idx === i ? v : e));
+  const removeEmail = (i) => setEmails(es => es.length === 1 ? [''] : es.filter((_, idx) => idx !== i));
+  const addEmail = () => setEmails(es => [...es, '']);
+
+  const validCount = emails.filter(e => /.+@.+\..+/.test(e.trim())).length;
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 60,
+      background: 'rgba(19,18,25,0.42)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      animation: 'pytFadeIn 140ms ease-out',
+    }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{
+        width: 560, maxWidth: 'calc(100vw - 48px)',
+        maxHeight: 'calc(100vh - 48px)', overflow: 'auto',
+        background: '#fff', borderRadius: 14,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.22)',
+        animation: 'pytModalIn 180ms ease-out',
+        fontFamily: PSet.font.sans,
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+          padding: '20px 24px 12px', gap: 16,
+        }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 500, color: PSet.color.ink900, letterSpacing: '-0.005em' }}>
+              Invite teammates
+            </h2>
+            <p style={{ margin: '4px 0 0', fontSize: 13, color: PSet.color.ink600, letterSpacing: PSet.font.tracking.sm, lineHeight: '18px' }}>
+              They'll get an email with a link to join your workspace.
+            </p>
+          </div>
+          <IconButton name="x" onClick={onClose} />
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '8px 24px 4px' }}>
+          <label style={{ display: 'block', fontSize: 12, color: PSet.color.ink700, letterSpacing: PSet.font.tracking.sm, marginBottom: 6 }}>
+            Email addresses
+          </label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {emails.map((e, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Input value={e} onChange={(ev) => updateEmail(i, ev.target.value)}
+                       placeholder="name@company.com" leftIcon="mail" style={{ flex: 1 }} />
+                <IconButton name="trash" onClick={() => removeEmail(i)} />
+              </div>
+            ))}
+          </div>
+          <button onClick={addEmail} style={{
+            marginTop: 10, padding: '6px 0', border: 0, background: 'transparent',
+            cursor: 'pointer', color: PSet.color.brand500,
+            fontFamily: PSet.font.sans, fontSize: 13, fontWeight: 500, letterSpacing: PSet.font.tracking.sm,
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+          }}>
+            <Icon name="plus" size={14} /> Add another
+          </button>
+        </div>
+
+        {/* Role picker */}
+        <div style={{ padding: '12px 24px 4px' }}>
+          <label style={{ display: 'block', fontSize: 12, color: PSet.color.ink700, letterSpacing: PSet.font.tracking.sm, marginBottom: 8 }}>
+            Assign role
+          </label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {ROLES.map(r => {
+              const on = role === r.id;
+              return (
+                <button key={r.id} onClick={() => setRole(r.id)} style={{
+                  textAlign: 'left', padding: '12px 14px',
+                  borderRadius: 8, cursor: 'pointer',
+                  border: `1px solid ${on ? PSet.color.brand500 : PSet.color.ink200}`,
+                  background: on ? PSet.color.brand50 : '#fff',
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  fontFamily: PSet.font.sans,
+                }}>
+                  <span style={{
+                    width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+                    border: `2px solid ${on ? PSet.color.brand500 : PSet.color.ink300}`,
+                    background: '#fff', position: 'relative',
+                  }}>
+                    {on && <span style={{
+                      position: 'absolute', inset: 2, borderRadius: '50%',
+                      background: PSet.color.brand500,
+                    }} />}
+                  </span>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: PSet.color.ink900, letterSpacing: PSet.font.tracking.sm }}>{r.id}</div>
+                    <div style={{ fontSize: 12, color: PSet.color.ink600, letterSpacing: PSet.font.tracking.xs, marginTop: 2 }}>{r.desc}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Personal message */}
+        <div style={{ padding: '12px 24px 4px' }}>
+          <label style={{ display: 'block', fontSize: 12, color: PSet.color.ink700, letterSpacing: PSet.font.tracking.sm, marginBottom: 6 }}>
+            Add a message <span style={{ color: PSet.color.ink500 }}>(optional)</span>
+          </label>
+          <textarea value={message} onChange={(e) => setMessage(e.target.value)}
+            placeholder="e.g. Welcome to the team! Let me know if you need help getting started."
+            rows={3}
+            style={{
+              width: '100%', resize: 'vertical', minHeight: 64,
+              padding: '10px 12px', borderRadius: 8,
+              border: `1px solid ${PSet.color.ink200}`, background: '#fff',
+              fontFamily: PSet.font.sans, fontSize: 14, color: PSet.color.ink900,
+              letterSpacing: PSet.font.tracking.sm, lineHeight: '20px',
+              outline: 'none', boxSizing: 'border-box',
+            }}
+          />
+        </div>
+
+        {/* Invite link toggle */}
+        <div style={{
+          margin: '12px 24px 0', padding: '12px 14px',
+          borderRadius: 8, border: `1px solid ${PSet.color.ink200}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+            <span style={{
+              width: 32, height: 32, borderRadius: 6, flexShrink: 0,
+              background: PSet.color.ink100, color: PSet.color.ink700,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Icon name="globe" size={16} />
+            </span>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 500, color: PSet.color.ink900, letterSpacing: PSet.font.tracking.sm }}>
+                Or share an invite link
+              </div>
+              <div style={{ fontSize: 12, color: PSet.color.ink600, letterSpacing: PSet.font.tracking.xs, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                packyourtour.com/join/8f3a-2b1c-9e4d · expires in 7 days
+              </div>
+            </div>
+          </div>
+          <Button variant={copyLink ? 'subtle' : 'outlined'} size="sm" icon={copyLink ? 'check2' : 'copy'}
+                  onClick={() => setCopyLink(true)}>
+            {copyLink ? 'Copied' : 'Copy link'}
+          </Button>
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '20px 24px', marginTop: 16,
+          borderTop: `1px solid ${PSet.color.ink150}`,
+          background: PSet.color.ink50 || '#FAFAFB',
+        }}>
+          <div style={{ fontSize: 12, color: PSet.color.ink600, letterSpacing: PSet.font.tracking.xs }}>
+            {validCount === 0 ? 'Add at least one email' :
+              `${validCount} invite${validCount === 1 ? '' : 's'} · ${role}`}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button variant="subtle" size="md" onClick={onClose}>Cancel</Button>
+            <Button variant="primary" size="md" icon="send" disabled={validCount === 0} onClick={onClose}>
+              Send invites
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---------- Team section (compact) ----------
 function TeamSection() {
+  const [inviteOpen, setInviteOpen] = useStateSet(false);
   const team = [
     { initials: 'MJ', name: 'Matas Jonėnas',   email: 'matas@packyourtour.com',   role: 'Owner',  status: 'Active', palette: 0 },
     { initials: 'AL', name: 'Aušra Liutkutė',  email: 'ausra@packyourtour.com',   role: 'Admin',  status: 'Active', palette: 3 },
@@ -471,7 +655,7 @@ function TeamSection() {
       <SectionHeader
         title="Team members"
         subtitle="Invite teammates and assign roles. Manage role permissions in Roles & permissions."
-        action={<Button variant="primary" size="md" icon="plus">Invite teammate</Button>}
+        action={<Button variant="primary" size="md" icon="plus" onClick={() => setInviteOpen(true)}>Invite teammate</Button>}
       />
 
       <div style={{
@@ -509,6 +693,7 @@ function TeamSection() {
           </div>
         ))}
       </div>
+      <InviteModal open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </div>
   );
 }
